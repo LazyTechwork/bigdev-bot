@@ -11,7 +11,8 @@
   "require": {
     "digitalstars/simplevk": "^2.13",
     "vlucas/phpdotenv": "^5.1",
-    "illuminate/database": "^7.24"
+    "illuminate/database": "^7.24",
+    "ulrichsg/getopt-php": "^3.4"
   },
   "scripts": {
     "serve": "@php -S localhost:8000"
