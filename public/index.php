@@ -11,6 +11,8 @@ require __DIR__ . '/../vendor/autoload.php';
 $config = Dotenv::createImmutable(__DIR__ . '/../');
 $config->load();
 $config->required('BOT_TOKEN')->notEmpty();
+$config->required('VKAPI_VERSION')->notEmpty();
+$config->required('BOT_GROUPID')->isInteger();
 $config->required('DB_DRIVER')->notEmpty();
 $config->required('DB_HOST')->notEmpty();
 $config->required('DB_NAME')->notEmpty();
