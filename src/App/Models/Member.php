@@ -12,4 +12,9 @@ class Member extends Model
     {
         return $this->hasMany(Strike::class);
     }
+
+    public function getFullNameAttribute()
+    {
+        return $this->first_name . " " . $this->last_name;
+    }
 }

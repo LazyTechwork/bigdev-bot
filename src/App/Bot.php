@@ -3,6 +3,7 @@
 namespace App;
 
 
+use App\Commands\CommandProcessor;
 use App\Models\Member;
 use DigitalStar\vk_api\Execute;
 use DigitalStar\vk_api\LongPoll;
@@ -52,6 +53,18 @@ class Bot
     private $capsule;
 
     /**
+     * @var CommandProcessor
+     */
+    private static $cmdprocessor;
+
+    /**
+     * Members cache
+     *
+     * @var array
+     */
+    private $members = [];
+
+    /**
      * Bot constructor.
      * @throws \DigitalStar\vk_api\VkApiException
      */
@@ -61,8 +74,14 @@ class Bot
         $this->groupid = $_ENV['BOT_GROUPID'];
         $this->client = vk_api::create($this->token, $_ENV['VKAPI_VERSION']);
         $this->client = new Execute($this->client);
-//        $this->lp = new LongPoll($this->client);
+        $this->lp = new LongPoll($this->client);
+        self::$cmdprocessor = new CommandProcessor($this->client, $this->lp);
         $this->setupDatabaseConnection();
+    }
+
+    public static function GetCommandProcessor()
+    {
+        return self::$cmdprocessor;
     }
 
     /**
@@ -179,6 +198,12 @@ class Bot
 
         if (sizeof($dbinsertion) != 0)
             Member::insert($dbinsertion);
+
+        $alreadyDB = Member::query()->where("status", "active")->get();
+
+        foreach ($alreadyDB as $member) {
+            $this->members[$member->vk] = $member;
+        }
     }
 
     /**
@@ -190,5 +215,17 @@ class Bot
         $this->generateTables();
         $this->collectAllMembers();
         echo "@BigDev bot running..\n";
+        $this->lp->listen(function () {
+            $this->lp->initVars($peer_id, $message, $payload, $user_id, $type, $data);
+//
+//            В типе message_new если есть action то можно получить тип события в беседе
+//            if ($data->object->action->type == 'chat_invite_user' || $data->object->action->type == 'chat_invite_user_by_link')
+//
+//            Также можно получить события из группы: https://vk.com/dev/groups_events
+//            В $data->object находится объект события из группы
+//
+            $member = $this->members[$user_id];
+            echo $member->full_name . " " . $message . "\n";
+        });
     }
 }
