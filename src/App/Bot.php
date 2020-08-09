@@ -89,7 +89,9 @@ class Bot
                 $table->unsignedBigInteger("messages")->default(0);
                 $table->enum("status", ["active", "banned", "striked"])->default("active");
                 $table->timestamps();
+                echo "Members table created";
             });
+        else echo "Members table already created";
 
 //        Creating Strike schema
         if (!Capsule::schema()->hasTable("strikes"))
@@ -99,7 +101,18 @@ class Bot
                 $table->foreign('member_id')->references('id')->on('members');
                 $table->string("comment")->nullable();
                 $table->timestamps();
+                echo "Strikes table created";
             });
+        else echo "Strikes table already created";
+    }
+
+    /**
+     * Drop all tables created by bot
+     */
+    public function dropTables()
+    {
+        Capsule::schema()->dropIfExists("members");
+        Capsule::schema()->dropIfExists("strikes");
     }
 
     /**
@@ -107,6 +120,8 @@ class Bot
      */
     public function run()
     {
+        echo "Generating databases..";
+        $this->generateTables();
         echo "@BigDev bot running..";
     }
 }
