@@ -10,7 +10,8 @@
   },
   "require": {
     "digitalstars/simplevk": "^2.13",
-    "vlucas/phpdotenv": "^5.1"
+    "vlucas/phpdotenv": "^5.1",
+    "illuminate/database": "^7.24"
   },
   "scripts": {
     "serve": "@php -S localhost:8000"
