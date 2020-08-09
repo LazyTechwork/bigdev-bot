@@ -28,8 +28,8 @@ class CLI
             'commands-title'  => "Commands:\n",
         ]);
         $this->getopt->addCommands([
-            Command::create("start", "CLI::botStart")->setDescription("Start bot"),
-            Command::create("db:fresh", "CLI::dbFresh")->setDescription("Recreate database"),
+            Command::create("start", "\\App\\CLI::botStart")->setDescription("Start bot"),
+            Command::create("db:fresh", "\\App\\CLI::dbFresh")->setDescription("Recreate database"),
         ]);
     }
 

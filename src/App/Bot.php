@@ -49,7 +49,7 @@ class Bot
     public function __construct()
     {
         $this->token = $_ENV['BOT_TOKEN'];
-        $this->client = vk_api::create($this->token, $_ENV['VKAPI_TOKEN']);
+        $this->client = vk_api::create($this->token, $_ENV['VKAPI_VERSION']);
 //        $this->lp = new LongPoll($this->client);
         $this->setupDatabaseConnection();
     }
