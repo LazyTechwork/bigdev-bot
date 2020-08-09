@@ -15,6 +15,6 @@
     "ulrichsg/getopt-php": "^3.4"
   },
   "scripts": {
-    "serve": "@php -S localhost:8000"
+    "start": "@php public/index.php start"
   }
 }
