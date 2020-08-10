@@ -82,7 +82,7 @@ class Bot
         $this->groupid = $_ENV['BOT_GROUPID'];
 
         $this->commands = [
-            ["cmd" => ["name" => "ban", "admin" => true, "handler" => "AdminCommands::ban"], "aliases" => ["бан", "мьёльнир", "тор", "thor"]],
+            ["cmd" => ["name" => "ban", "admin" => true, "handler" => "AdminCommands::ban"], "aliases" => ["бан", "мьёльнир", "тор", "thor", "банхаммер", "banhammer", "молотилдо"]],
             ["cmd" => ["name" => "strike", "admin" => true, "handler" => "AdminCommands::strike"], "aliases" => ["страйк", "молния"]],
         ];
 
@@ -254,7 +254,6 @@ class Bot
 //            Также можно получить события из группы: https://vk.com/dev/groups_events
 //            В $data->object находится объект события из группы
 //
-            Utils::debug($data);
             if ($data->type == 'message_new') {
                 $member = $this->members[$user_id];
                 Utils::log($member->full_name . " " . $message);

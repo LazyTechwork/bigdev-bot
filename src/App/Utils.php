@@ -32,4 +32,9 @@ class Utils
     {
         self::log(print_r($var, true), self::$LOG_DEBUG);
     }
+
+    public static function generateMention($id, $text)
+    {
+        return "[" . ($id > 0 ? "id" : "club") . (abs($id)) . "|$text]";
+    }
 }

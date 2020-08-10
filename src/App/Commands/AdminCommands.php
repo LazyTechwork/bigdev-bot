@@ -5,6 +5,7 @@ namespace App\Commands;
 
 
 use App\Models\Member;
+use App\Utils;
 use DigitalStar\vk_api\vk_api;
 use Illuminate\Support\Str;
 
@@ -49,7 +50,13 @@ class AdminCommands
             "comment"         => "Вы были заблокированы в беседе пользователем {$sender->full_name}",
             "comment_visible" => 1,
         ]);
-        $client->sendMessage($peer_id, "Пользователь [" . ($banuser > 0 ? "id" : "club") . (abs($banuser)) . sprintf("|%s] был заблокирован [id%s|%s]", $banned->full_name, $sender->vk, $sender->full_name));
+        $client->sendMessage($peer_id,
+            sprintf(
+                "Пользователь %s был заблокирован %s",
+                Utils::generateMention($banuser, $banned->full_name),
+                Utils::generateMention($sender->vk, $sender->full_name)
+            ),
+            ["disable_mentions" => 1]);
         return true;
     }
 }
