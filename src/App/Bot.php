@@ -35,6 +35,13 @@ class Bot
     private vk_api $client;
 
     /**
+     * VK API user client
+     *
+     * @var vk_api
+     */
+    private vk_api $user_client;
+
+    /**
      * Bot groupid
      *
      * @var integer
@@ -80,10 +87,11 @@ class Bot
         ];
 
         $this->client = vk_api::create($this->token, $_ENV['VKAPI_VERSION']);
+        $this->user_client = vk_api::create($_ENV['USER_TOKEN'], $_ENV['VKAPI_VERSION']);
         $this->client = new Execute($this->client);
         $this->lp = new LongPoll($this->client);
 
-        self::$cmdprocessor = new CommandProcessor($this->client);
+        self::$cmdprocessor = new CommandProcessor($this->client, $this->user_client);
         $this->setupDatabaseConnection();
     }
 
@@ -246,10 +254,13 @@ class Bot
 //            Также можно получить события из группы: https://vk.com/dev/groups_events
 //            В $data->object находится объект события из группы
 //
-            $member = $this->members[$user_id];
-            Utils::log($member->full_name . " " . $message, Utils::$LOG_DEBUG);
+            Utils::debug($data);
+            if ($data->type == 'message_new') {
+                $member = $this->members[$user_id];
+                Utils::log($member->full_name . " " . $message);
 
-            $this->processMessage($message, $peer_id, $user_id, $data->object->message->reply_message);
+                $this->processMessage($message, $peer_id, $user_id, $data->object->reply_message ?? null);
+            }
         });
     }
 
@@ -272,9 +283,12 @@ class Bot
         $member = $this->members[$user_id];
         $member->messages++; // Increasing messages count for member
 
-        if (Str::start($message, CommandProcessor::COMMANDS_PREFIX)) {
+        if (Str::startsWith($message, CommandProcessor::COMMANDS_PREFIX)) {
             [$command, $args] = explode(' ', $message, 2);
+            $command = Str::substr($command, 1);
             $args = explode(' ', $args);
+            Utils::debug($command);
+            Utils::debug($args);
             $cmdargs = [];
             foreach ($args as $arg) if (is_numeric($arg))
                 $cmdargs[] = new CommandArgument(CommandArgument::$TYPE_INTEGER, $arg);

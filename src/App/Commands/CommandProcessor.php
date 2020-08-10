@@ -15,13 +15,15 @@ class CommandProcessor
     private $commands = [];
     private $namespace = [];
     private $client;
+    private $user_client;
 
     /**
      * CommandProcessor constructor.
      */
-    public function __construct(vk_api $client)
+    public function __construct(vk_api $client, vk_api $user_client)
     {
         $this->client = $client;
+        $this->user_client = $user_client;
     }
 
 
@@ -70,6 +72,6 @@ class CommandProcessor
         if ($command["admin"] && !$admin)
             return false;
         [$class, $method] = explode('::', $command["handler"]);
-        return call_user_func([self::COMMANDS_HOME . $class, $method], $this->client, $sender, $peer_id, $attached_message, $args);
+        return call_user_func([self::COMMANDS_HOME . $class, $method], $this->client, $this->user_client, $sender, $peer_id, $attached_message, $args);
     }
 }
