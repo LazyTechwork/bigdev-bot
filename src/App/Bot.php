@@ -253,7 +253,7 @@ class Bot
 
         if (Str::start($message, CommandProcessor::COMMANDS_PREFIX)) {
             [$command, $args] = explode(' ', $message, 2);
-            $args = explode(' ', $message);
+            $args = explode(' ', $args);
             $cmdargs = [];
             foreach ($args as $arg) if (is_numeric($arg))
                 $cmdargs[] = new CommandArgument(CommandArgument::$TYPE_INTEGER, $arg);
@@ -265,5 +265,7 @@ class Bot
 
             self::$cmdprocessor->callCommand($command, $member->admin, $cmdargs);
         }
+
+        return true;
     }
 }
