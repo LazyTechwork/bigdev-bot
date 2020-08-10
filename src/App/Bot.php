@@ -9,6 +9,7 @@ use App\Models\Member;
 use DigitalStar\vk_api\Execute;
 use DigitalStar\vk_api\LongPoll;
 use DigitalStar\vk_api\vk_api;
+use DigitalStar\vk_api\VkApiException;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Str;
@@ -31,7 +32,7 @@ class Bot
      *
      * @var Execute|vk_api
      */
-    private $client;
+    private vk_api $client;
 
     /**
      * Bot groupid
@@ -45,45 +46,45 @@ class Bot
      *
      * @var LongPoll
      */
-    private $lp;
-
-    /**
-     * Eloquent database manager
-     *
-     * @var Capsule
-     */
-    private $capsule;
+    private LongPoll $lp;
 
     /**
      * @var CommandProcessor
      */
-    private static $cmdprocessor;
+    private static CommandProcessor $cmdprocessor;
 
     /**
      * Members cache
      *
-     * @var array
+     * @var Member[]
      */
-    private $members = [];
+    private array $members = [];
+
+    /**
+     * @var string[]
+     */
+    private array $commands;
 
     /**
      * Bot constructor.
-     * @throws \DigitalStar\vk_api\VkApiException
+     * @throws VkApiException
      */
     public function __construct()
     {
         $this->token = $_ENV['BOT_TOKEN'];
         $this->groupid = $_ENV['BOT_GROUPID'];
+
+        $this->commands = [
+            ["cmd" => ["name" => "ban", "admin" => true, "handler" => "AdminCommands::ban"], "aliases" => ["бан", "мьёльнир", "тор", "thor"]],
+            ["cmd" => ["name" => "strike", "admin" => true, "handler" => "AdminCommands::strike"], "aliases" => ["страйк", "молния"]],
+        ];
+
         $this->client = vk_api::create($this->token, $_ENV['VKAPI_VERSION']);
         $this->client = new Execute($this->client);
         $this->lp = new LongPoll($this->client);
-        self::$cmdprocessor = new CommandProcessor($this->client, $this->lp);
-        $this->setupDatabaseConnection();
-    }
 
-    public static function GetCommandProcessor()
-    {
-        return self::$cmdprocessor;
+        self::$cmdprocessor = new CommandProcessor($this->client);
+        $this->setupDatabaseConnection();
     }
 
     /**
@@ -91,8 +92,8 @@ class Bot
      */
     public function setupDatabaseConnection()
     {
-        $this->capsule = new Capsule();
-        $this->capsule->addConnection([
+        $capsule = new Capsule();
+        $capsule->addConnection([
             'driver'    => $_ENV['DB_DRIVER'],
             'host'      => $_ENV['DB_HOST'],
             'database'  => $_ENV['DB_NAME'],
@@ -102,8 +103,8 @@ class Bot
             'collation' => 'utf8_unicode_ci',
             'prefix'    => '',
         ]);
-        $this->capsule->bootEloquent();
-        $this->capsule->setAsGlobal();
+        $capsule->bootEloquent();
+        $capsule->setAsGlobal();
     }
 
     /**
@@ -152,7 +153,7 @@ class Bot
     /**
      * Collecting all group members and inserting them in database
      *
-     * @throws \DigitalStar\vk_api\VkApiException
+     * @throws VkApiException
      */
     public function collectAllMembers()
     {
@@ -208,15 +209,33 @@ class Bot
         }
     }
 
+    public function initializeCommands()
+    {
+        foreach ($this->commands as $command) {
+            $cmd = $command["cmd"];
+            Utils::log("Creating command {$cmd["name"]} {{$cmd["handler"]}}", Utils::$LOG_DEBUG);
+            self::$cmdprocessor->createCommand($cmd["name"], $cmd["handler"], $cmd["admin"]);
+            foreach ($command["aliases"] as $alias) {
+                Utils::log("Creating alias for {$cmd["name"]} ($alias)", Utils::$LOG_DEBUG);
+                self::$cmdprocessor->createAlias($cmd["name"], $alias);
+            }
+        }
+    }
+
     /**
      * Method to run bot
-     * @throws \DigitalStar\vk_api\VkApiException
+     * @throws VkApiException
      */
     public function run()
     {
         Utils::log("Generating databases..");
         $this->generateTables();
         $this->collectAllMembers();
+
+        Utils::log("Registering commands..");
+        $this->initializeCommands();
+        Utils::log("Initialized " . sizeof($this->commands) . " commands");
+
         Utils::log("@BigDev bot running..");
         $this->lp->listen(function () {
             $this->lp->initVars($peer_id, $message, $payload, $user_id, $type, $data);
@@ -230,7 +249,7 @@ class Bot
             $member = $this->members[$user_id];
             Utils::log($member->full_name . " " . $message, Utils::$LOG_DEBUG);
 
-//            $this->processMessage($message, $peer_id, $user_id);
+            $this->processMessage($message, $peer_id, $user_id, $data->object->message->reply_message);
         });
     }
 
@@ -240,8 +259,10 @@ class Bot
      * @param $message
      * @param $peer_id
      * @param $user_id
+     * @param $attached_message
+     * @return bool
      */
-    public function processMessage($message, $peer_id, $user_id)
+    public function processMessage(string $message, int $peer_id, int $user_id, $attached_message)
     {
         $isUser = $peer_id < 2000000000; // Checking is conversation or user
 
@@ -263,7 +284,7 @@ class Bot
             } else
                 $cmdargs[] = new CommandArgument(CommandArgument::$TYPE_STRING, $arg);
 
-            self::$cmdprocessor->callCommand($command, $member->admin, $cmdargs);
+            self::$cmdprocessor->callCommand($command, $member->admin, $member, $cmdargs, $peer_id, $attached_message);
         }
 
         return true;

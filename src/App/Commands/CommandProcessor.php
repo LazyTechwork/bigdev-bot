@@ -4,6 +4,7 @@
 namespace App\Commands;
 
 
+use App\Models\Member;
 use DigitalStar\vk_api\LongPoll;
 use DigitalStar\vk_api\vk_api;
 
@@ -14,15 +15,13 @@ class CommandProcessor
     private $commands = [];
     private $namespace = [];
     private $client;
-    private $lp;
 
     /**
      * CommandProcessor constructor.
      */
-    public function __construct(vk_api $client, LongPoll $lp)
+    public function __construct(vk_api $client)
     {
         $this->client = $client;
-        $this->lp = $lp;
     }
 
 
@@ -57,16 +56,20 @@ class CommandProcessor
     /**
      * Call command by name or alias
      *
-     * @param $cmd
-     * @param $args
+     * @param string $cmd
+     * @param bool $admin
+     * @param Member $sender
+     * @param array $args
+     * @param int $peer_id
+     * @param $attached_message
      * @return mixed
      */
-    public function callCommand($cmd, $admin, $args)
+    public function callCommand(string $cmd, $admin, Member $sender, array $args, int $peer_id, $attached_message)
     {
         $command = $this->commands[$this->namespace[$cmd]];
         if ($command["admin"] && !$admin)
             return false;
         [$class, $method] = explode('::', $command["handler"]);
-        return call_user_func([self::COMMANDS_HOME . $class, $method], $this->client, $this->lp, $args);
+        return call_user_func([self::COMMANDS_HOME . $class, $method], $this->client, $sender, $peer_id, $attached_message, $args);
     }
 }
