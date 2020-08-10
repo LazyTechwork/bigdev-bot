@@ -35,8 +35,9 @@ class AdminCommands
         }
         $banned = null;
         if ($banuser > 0) {
-            $banned = Member::query()->where("vk", $banuser)->get();
-            Member::query()->where("vk", $banuser)->update(["status" => "banned"]);
+            $banned = Member::query()->where("vk", $banuser)->first();
+            $banned->status = "banned";
+            $banned->save();
         }
         $client->request("messages.removeChatUser", [
             "chat_id"   => $peer_id - 2000000000,
