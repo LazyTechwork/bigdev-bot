@@ -10,6 +10,7 @@ use DigitalStar\vk_api\vk_api;
 class CommandProcessor
 {
     public const COMMANDS_HOME = "\\App\\Commands\\";
+    public const COMMANDS_PREFIX = "/";
     private $commands = [];
     private $namespace = [];
     private $client;
@@ -66,6 +67,6 @@ class CommandProcessor
         if ($command["admin"] && !$admin)
             return false;
         [$class, $method] = explode('::', $command["handler"]);
-        return call_user_func([self::COMMANDS_HOME . $class, $method], $this->client, $this->lp, ...$args);
+        return call_user_func([self::COMMANDS_HOME . $class, $method], $this->client, $this->lp, $args);
     }
 }
