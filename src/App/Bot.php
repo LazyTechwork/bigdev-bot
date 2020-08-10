@@ -221,10 +221,10 @@ class Bot
     {
         foreach ($this->commands as $command) {
             $cmd = $command["cmd"];
-            Utils::log("Creating command {$cmd["name"]} {{$cmd["handler"]}}", Utils::$LOG_DEBUG);
+            Utils::log("Creating command {$cmd["name"]} {{$cmd["handler"]}}", Utils::$LOG_WARN);
             self::$cmdprocessor->createCommand($cmd["name"], $cmd["handler"], $cmd["admin"]);
             foreach ($command["aliases"] as $alias) {
-                Utils::log("Creating alias for {$cmd["name"]} ($alias)", Utils::$LOG_DEBUG);
+                Utils::log("Creating alias for {$cmd["name"]} ($alias)", Utils::$LOG_WARN);
                 self::$cmdprocessor->createAlias($cmd["name"], $alias);
             }
         }
@@ -286,8 +286,6 @@ class Bot
             [$command, $args] = explode(' ', $message, 2);
             $command = Str::substr($command, 1);
             $args = explode(' ', $args);
-            Utils::debug($command);
-            Utils::debug($args);
             $cmdargs = [];
             foreach ($args as $arg) if (is_numeric($arg))
                 $cmdargs[] = new CommandArgument(CommandArgument::$TYPE_INTEGER, $arg);
